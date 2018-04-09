@@ -1,0 +1,90 @@
+---
+title: "Bill Flow"
+output: html_notebook
+---
+
+```{r}
+pacman::p_load(dplyr, ggplot2, purrr, stringr)
+```
+
+```{r}
+dir()
+dt <- get(load("wholeinformation.Rdata")) %>%
+  #mutate_all(as.character) %>%
+  mutate(date = date %>% 
+    str_sub(1, 13) %>%
+    as.Date(format = "%m.%d.%Y")
+  ) %>% 
+  select(date, vorgaenge, title) %>%
+  tidyr::unnest() %>%
+  mutate(id =  gesetzid %>% as.character %>% str_extract("\\d{6}"))
+
+save(dt, file = "dt.Rdata")
+
+str(dt)
+#dt$date
+
+
+# dt <- tibble(
+#   url = blist %>% purrr::map_chr("url"),
+#   title = blist %>% purrr::map_chr("title"),
+#   #basis = blist %>% purrr::map("basis"),
+#   inhalt = blist %>% purrr::map_chr("inhalt"),
+#   schlwoerter = blist %>% purrr::map_chr("schlwoerter"),
+#   vorgaenge = blist %>% purrr::map("vorgaenge")
+# )
+# 
+# glimpse(dt)
+# 
+# dt_long <- dt %>%
+#   mutate(id = 1:n()) %>%
+#   #select(title, vorgaenge) %>%
+#   tidyr::unnest() %>%
+#   mutate(
+#     date = str_extract(vorgaenge, "\\d{1,2}\\.\\d{1,2}\\.\\d{4}"),
+#     vorgang = vorgaenge %>% 
+#       str_extract("\n.*\n") %>% 
+#       str_replace_all("(\n)|(\t)", ""),
+#     inst =  vorgang %>%
+#         str_extract("B(T|R)")
+#   ) %>%
+#   mutate_all(str_trim) %>%
+# mutate(date = date %>% 
+#  #str_replace_all("\\.", "-") %>% 
+#  as.Date(format = "%d.%m.%Y")
+# )
+```
+
+
+```{r, fig.height = 4, fig.width = 7}
+
+nn <- dt %>% 
+  filter(id %in% c("137235", "137011", "136967")) %>%
+  mutate(issue = title %>% as.character %>% stringr::str_sub(start = 1, end = 50)) %>%
+  mutate(institution = ifelse(institution == "BT", 2, 1))
+
+nn %>%
+  ggplot(aes(as.Date(date1, format = "%d.%m.%Y"), institution)) +
+  geom_point(aes(colour = as.factor(institution)), size = 3) +
+  geom_line(size = 2, alpha = .5, aes(group = 1)) +
+  ggthemes::theme_few() +
+  labs(x = "", y = "") + 
+  theme(legend.position = "bottom") +
+  ggthemes::scale_colour_fivethirtyeight("", labels = c("BR", "BT")) +
+  facet_wrap(~issue)
+
+nn %>%
+  filter(id == "137235") %>%
+  ggplot(aes(as.Date(date1, format = "%d.%m.%Y"), institution)) +
+  geom_point(aes(colour = as.factor(institution)), size = 3) +
+  geom_line(size = 2, alpha = .5, aes(group = 1)) +
+  ggthemes::theme_few() +
+  labs(x = "", y = "") + 
+  theme(legend.position = "bottom") +
+  ggthemes::scale_colour_fivethirtyeight("", labels = c("BR", "BT"))
+```
+
+```{r}
+
+```
+
